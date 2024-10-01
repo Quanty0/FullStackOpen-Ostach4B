@@ -1,11 +1,12 @@
 import Part from './Part'
 
-const Content = () => {
+const Content = (props) => {
+	const { parts } = props.course
 	return (
 		<>
-			<Part name="Fundamentals of React" exercises={10} />
-			<Part name="Using props to pass data" exercises={7} />
-			<Part name="State of a component" exercises={14} />
+			{parts.map(part => (
+				<Part key={part.name} {...part} />
+			))}
 		</>
 	)
 }
