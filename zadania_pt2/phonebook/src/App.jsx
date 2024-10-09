@@ -1,5 +1,10 @@
+/* eslint-disable react/prop-types */
+import './index.css'
+
 import { useState, useEffect } from 'react';
+
 import personService from './services/personsService';
+
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
@@ -9,6 +14,7 @@ const App = () => {
 	const [newName, setNewName] = useState('');
 	const [newNumber, setNewNumber] = useState('');
 	const [filter, setFilter] = useState('');
+	const [notiMessage, setNotiMessage] = useState(null)
 
 	useEffect(() => {
 		personService
@@ -33,9 +39,15 @@ const App = () => {
 				.create(personObject)
 				.then(response => {
 					setPersons(persons.concat(response));
+					setNotiMessage(
+						`Added ${newName}`
+					)
+					setTimeout(() => {
+						setNotiMessage(null)
+					}, 5000)
 					setNewName('');
 					setNewNumber('');
-				});
+				})
 		}
 	};
 
@@ -73,9 +85,26 @@ const App = () => {
 		setNewNumber(e.target.value);
 	};
 
+	const Notification = ({ message }) => {
+		if (message === null) {
+			return null
+		}
+
+		setTimeout(() => {
+			setNotiMessage(null)
+		}, 2500)
+
+		return (
+			<div className='notification'>
+				{message}
+			</div>
+		)
+	}
+
 	return (
 		<>
 			<h2>Phonebook</h2>
+			<Notification message={notiMessage} />
 			<Filter filter={filter} setFilter={setFilter} />
 			<PersonForm
 				newName={newName}
