@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 
-const Persons = ({ persons, filter }) => {
+const Persons = ({ persons, filter, handleDeletePerson }) => {
   const personsToShow = filter
     ? persons.filter(person => person.name.toLowerCase().includes(filter))
     : persons;
@@ -8,8 +8,8 @@ const Persons = ({ persons, filter }) => {
   return (
     <div>
       <h3>Numbers</h3>
-      {personsToShow.map((person, index) => (
-        <div key={index}>{person.name} {person.number}</div>
+      {personsToShow.map(person => (
+        <div key={person.id}>{person.name} {person.number} <button onClick={handleDeletePerson}>delete</button></div>
       ))}
     </div>
   );

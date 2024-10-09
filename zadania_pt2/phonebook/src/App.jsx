@@ -1,46 +1,77 @@
-import { useState } from 'react'
-
-import Filter from './components/Filter'
-import PersonForm from './components/PersonForm'
-import Persons from './components/Persons'
+import { useState, useEffect } from 'react';
+import personService from './services/personsService';
+import Filter from './components/Filter';
+import PersonForm from './components/PersonForm';
+import Persons from './components/Persons';
 
 const App = () => {
-	const [persons, setPersons] = useState([
-		{ name: 'Arto Hellas', number: '040-123456', id: 1 },
-		{ name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-		{ name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-		{ name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-	])
-	const [newName, setNewName] = useState('')
-	const [newNumber, setNewNumber] = useState('')
-	const [filter, setFilter] = useState('')
+	const [persons, setPersons] = useState([]);
+	const [newName, setNewName] = useState('');
+	const [newNumber, setNewNumber] = useState('');
+	const [filter, setFilter] = useState('');
 
-	const addPerson = (e) => {
-		e.preventDefault()
-		// alert(newName)
+	useEffect(() => {
+		personService
+			.getAll()
+			.then(initialPersons => {
+				setPersons(initialPersons);
+			});
+	}, []);
+
+	const addPerson = e => {
+		e.preventDefault();
 		if (persons.some(person => person.name === newName)) {
-			alert(`${newName} is already added to phonebook`)
-		}
-		else {
-			setPersons((prevPersons => [
-				...prevPersons,
-				{
-					name: newName,
-					number: newNumber
-				}
-			]))
-			setNewName('')
-			setNewNumber('')
-		}
-	}
+			alert(`${newName} is already added to phonebook`);
+		} else {
+			const personObject = {
+				name: newName,
+				number: newNumber,
+				id: persons.length > 0 ? parseInt(persons[persons.length - 1].id) + 1 : 1,
+			};
 
-	const handleNameChange = (e) => {
-		setNewName(e.target.value)
-	}
+			personService
+				.create(personObject)
+				.then(response => {
+					setPersons(persons.concat(response));
+					setNewName('');
+					setNewNumber('');
+				});
+		}
+	};
 
-	const handleNumberChange = (e) => {
-		setNewNumber(e.target.value)
-	}
+	const handleDeletePerson = (id) => {
+		console.log('Deleting person with id:', id); // Debugging log
+		const person = persons.find(p => p.id === id);
+
+		if (!person) {
+			console.log('Person not found with id:', id); // Log if person not found
+			alert('Person not found');
+			return;
+		}
+
+		if (window.confirm(`Delete ${person.name}?`)) {
+			personService
+				.delete(id)
+				.then(() => {
+					setPersons(persons.filter(p => p.id !== id));
+					console.log(`Deleted person with id: ${id}`); // Log success
+				})
+				.catch(error => {
+					console.error(`Failed to delete person with id: ${id}`, error); // Error log
+					alert(`The person '${person.name}' was already removed from server`);
+					setPersons(persons.filter(p => p.id !== id)); // Remove from UI
+				});
+		}
+	};
+
+
+	const handleNameChange = e => {
+		setNewName(e.target.value);
+	};
+
+	const handleNumberChange = e => {
+		setNewNumber(e.target.value);
+	};
 
 	return (
 		<>
@@ -53,9 +84,13 @@ const App = () => {
 				handleNumberChange={handleNumberChange}
 				addPerson={addPerson}
 			/>
-			<Persons persons={persons} filter={filter} />
+			<Persons
+				persons={persons}
+				filter={filter}
+				handleDeletePerson={handleDeletePerson}
+			/>
 		</>
-	)
-}
+	);
+};
 
-export default App
+export default App;
