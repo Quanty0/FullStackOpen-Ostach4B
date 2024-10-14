@@ -1,10 +1,11 @@
 const express = require('express')
-// const Person = require('./models/person')
+const Person = require('./models/person')
 const app = express()
+require('dotenv').config()
 
 app.use(express.json())
-
-let persons = [
+{/*
+let persons = []
 	{
 		"id": "1",
 		"name": "Arto Hellas",
@@ -26,29 +27,29 @@ let persons = [
 		"number": "39-23-6423122"
 	}
 ]
-
-app.use(morgan((tokens, req, res) => {
-	return [
-		tokens.method(req, res),
-		tokens.url(req, res),
-		tokens.status(req, res),
-		tokens.res(req, res, 'content-length'), '-',
-		tokens['response-time'](req, res), 'ms',
-		JSON.stringify(req.body)
-	].join(' ')
-}))
+*/}
+// app.use(morgan((tokens, req, res) => {
+// 	return [
+// 		tokens.method(req, res),
+// 		tokens.url(req, res),
+// 		tokens.status(req, res),
+// 		tokens.res(req, res, 'content-length'), '-',
+// 		tokens['response-time'](req, res), 'ms',
+// 		JSON.stringify(req.body)
+// 	].join(' ')
+// }))
 
 app.get('/info', (request, response) => {
 	const currentDate = new Date().toLocaleString();
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 	response.send(
-		`
-				<div>
-					<p>Phonebook has info for ${persons.length} people</p>
-				</div>
-				<div>
-					<p>${currentDate} (${timeZone})</p>
-				</div>`
+		`	
+			<div>
+				<p>Phonebook has info for ${persons.length} people</p>
+			</div>
+			<div>
+				<p>${currentDate} (${timeZone})</p>
+			</div>`
 	)
 })
 
@@ -57,7 +58,9 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-	response.json(persons)
+	Person.find({}).then(persons => {
+		response.json(persons)
+	})
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -67,21 +70,22 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = request.params.id
-	const person = persons.find(person => person.id === id)
-
-	if (person) {
-		response.json(person)
-	} else {
-		response.status(404).end()
-	}
+	Person.findById(request.params.id)
+		.then(person => {
+			if (person) {
+				response.json(person)
+			} else {
+				response.status(404).end()
+			}
+		}).catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = request.params.id
-	persons = persons.filter(person => person.id !== id)
-
-	response.status(204).end()
+	Note.findByIdAndDelete(request.params.id)
+		.then(result => {
+			response.status(204).end()
+		})
+		.catch(error => next(error))
 })
 
 
