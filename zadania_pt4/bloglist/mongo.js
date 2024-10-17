@@ -1,5 +1,3 @@
-/* eslint-disable @stylistic/js/linebreak-style */
-/* eslint-disable @stylistic/js/semi */
 const mongoose = require('mongoose')
 require('dotenv').config()
 
@@ -12,24 +10,29 @@ const url = process.env.MONGODB_URI
 
 mongoose.set('strictQuery', false)
 mongoose.connect(url).then(() => {
-  const personSchema = new mongoose.Schema({
-    name: {
-      type: String,
-      minlength: 3,
-      required: true,
-      unique: true
-    },
-    number: {
-      type: String,
-      minlength: 8,
-      required: true
-    }
+  const blogSchema = new mongoose.Schema({
+    content: String,
+    important: Boolean,
   })
 
-  const Person = mongoose.model('Person', personSchema)
+  const Blog = mongoose.model('Blog', blogSchema)
 
-  const name = process.argv[2];
-  const number = process.argv[3];
+  const blog = new Blog({
+    content: 'HTML is x',
+    important: true,
+  })
+  /*
+  note.save().then(result => {
+    console.log('note saved!')
+    mongoose.connection.close()
+  })
+  */
+  Blog.find({}).then(result => {
+    result.forEach(blog => {
+      console.log(blog)
+    })
+    mongoose.connection.close()
+  })
 
   personSchema.set('toJSON', {
     transform: (document, returnedObject) => {
@@ -39,7 +42,7 @@ mongoose.connect(url).then(() => {
     }
   })
 
-  const addPerson = async () => {
+  const addBlog = async () => {
     if (name && number) {
       const person = new Person({
         name,
@@ -58,11 +61,11 @@ mongoose.connect(url).then(() => {
     }
   }
 
-  const listPeople = async () => {
+  const listBlog = async () => {
     try {
-      const people = await Person.find({})
-      people.forEach(person => {
-        console.log(person)
+      const blog = await Blog.find({})
+      people.forEach(blog => {
+        console.log(blog)
       })
     } catch (error) {
       console.error('Error fetching people:', error.message)
@@ -71,5 +74,12 @@ mongoose.connect(url).then(() => {
     }
   }
 
-  addPerson()
+  blogSchema.set('toJSON', {
+    transform: (document, returnedObject) => {
+      returnedObject.id = returnedObject._id.toString()
+      delete returnedObject._id
+      delete returnedObject.__v
+    }
+  })
+
 })
