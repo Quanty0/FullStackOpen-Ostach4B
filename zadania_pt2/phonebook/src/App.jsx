@@ -3,7 +3,7 @@ import './index.css'
 
 import { useState, useEffect } from 'react';
 
-import personService from './services/personsService';
+import personService from './services/persons';
 
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
