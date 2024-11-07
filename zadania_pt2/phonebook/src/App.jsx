@@ -1,125 +1,140 @@
-/* eslint-disable react/prop-types */
-import './index.css'
-
-import { useState, useEffect } from 'react';
-
-import personService from './services/persons';
-
-import Filter from './components/Filter';
-import PersonForm from './components/PersonForm';
-import Persons from './components/Persons';
+import { useState, useEffect } from "react";
+import Filter from "./components/Filter";
+import Persons from "./components/Persons";
+import PersonForm from "./components/PersonForm";
+import Notification from "./components/Notification";
+import personService from "./services/persons";
 
 const App = () => {
-	const [persons, setPersons] = useState([]);
-	const [newName, setNewName] = useState('');
-	const [newNumber, setNewNumber] = useState('');
-	const [filter, setFilter] = useState('');
-	const [notiMessage, setNotiMessage] = useState(null)
+  const [allPersons, setAllPersons] = useState([]);
+  const [filterStr, setFilterStr] = useState("");
+  const [newPerson, setNewPerson] = useState({ name: "", number: "" });
+  const [notification, setNotification] = useState(null);
 
-	useEffect(() => {
-		personService
-			.getAll()
-			.then(initialPersons => {
-				setPersons(initialPersons);
-			});
-	}, []);
+  useEffect(() => {
+    personService.getAll().then((persons) => {
+      setAllPersons(persons);
+    });
+  }, []);
 
-	const addPerson = e => {
-		e.preventDefault();
-		if (persons.some(person => person.name === newName)) {
-			alert(`${newName} is already added to phonebook`);
-		} else {
-			const personObject = {
-				name: newName,
-				number: newNumber,
-				id: persons.length > 0 ? parseInt(persons[persons.length - 1].id) + 1 : 1,
-			};
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 4000);
 
-			personService
-				.create(personObject)
-				.then(response => {
-					setPersons(persons.concat(response));
-					setNotiMessage(
-						`Added ${newName}`
-					)
-					setTimeout(() => {
-						setNotiMessage(null)
-					}, 5000)
-					setNewName('');
-					setNewNumber('');
-				})
-		}
-	};
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [notification]);
 
-	const handleDeletePerson = (id) => {
-		console.log('Deleting person with id:', id); // Debugging log
-		const person = persons.find(p => p.id === id);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const result = allPersons.find(
+      (person) => person.name === newPerson.name.trim()
+    );
+    if (!result) {
+      personService
+        .create(newPerson)
+        .then((person) => {
+          setAllPersons((prevPersons) => prevPersons.concat(person));
+          setNewPerson({ name: "", number: "" });
+          setNotification({
+            type: "success",
+            text: `${person.name} was successfully added`,
+          });
+        })
+        .catch((error) => {
+          setNotification({
+            type: "error",
+            text: error.response?.data?.error || "unknown error",
+          });
+        });
+    } else {
+      if (
+        window.confirm(
+          `${newPerson.name} is already added to phonebook, replace the old number with a new one?`
+        )
+      ) {
+        personService
+          .update(result.id, newPerson)
+          .then((updatedPerson) => {
+            setAllPersons((prevPersons) =>
+              prevPersons.map((person) =>
+                person.id !== updatedPerson.id ? person : updatedPerson
+              )
+            );
+            setNewPerson({ name: "", number: "" });
+            setNotification({
+              type: "success",
+              text: `${newPerson.name} was successfully updated`,
+            });
+          })
+          .catch((error) => {
+            if (error.response?.status === 404) {
+              setAllPersons((prevPersons) =>
+                prevPersons.filter((person) => person.id !== result.id)
+              );
+              setNotification({
+                type: "error",
+                text: `Information of ${newPerson.name} has already removed from server`,
+              });
+            } else {
+              setNotification({
+                type: "error",
+                text: error.response?.data?.error || "unknown error",
+              });
+            }
+          });
+      }
+    }
+  };
 
-		if (!person) {
-			console.log('Person not found with id:', id); // Log if person not found
-			alert('Person not found');
-			return;
-		}
+  const handleFormChange = ({ target: { name, value } }) => {
+    setNewPerson((newPerson) => ({
+      ...newPerson,
+      [name]: value,
+    }));
+  };
 
-		if (window.confirm(`Delete ${person.name}?`)) {
-			personService
-				.delete(id)
-				.then(() => {
-					setPersons(persons.filter(p => p.id !== id));
-					console.log(`Deleted person with id: ${id}`); // Log success
-				})
-				.catch(error => {
-					console.error(`Failed to delete person with id: ${id}`, error); // Error log
-					alert(`The person '${person.name}' was already removed from server`);
-					setPersons(persons.filter(p => p.id !== id)); // Remove from UI
-				});
-		}
-	};
+  const handleChangeFilter = (event) => {
+    setFilterStr(event.target.value);
+  };
 
+  const handleRemove = (id, name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      personService.remove(id).then(() => {
+        setAllPersons((prevPersons) =>
+          prevPersons.filter((person) => person.id !== id)
+        );
+        setNotification({
+          type: "success",
+          text: `${name} was successfully deleted`,
+        });
+      });
+    }
+  };
 
-	const handleNameChange = e => {
-		setNewName(e.target.value);
-	};
-
-	const handleNumberChange = e => {
-		setNewNumber(e.target.value);
-	};
-
-	const Notification = ({ message }) => {
-		if (message === null) {
-			return null
-		}
-
-		setTimeout(() => {
-			setNotiMessage(null)
-		}, 2500)
-
-		return (
-			<div className='notification'>
-				{message}
-			</div>
-		)
-	}
-
-	return (
-		<>
-			<h2>Phonebook</h2>
-			<Notification message={notiMessage} />
-			<Filter filter={filter} setFilter={setFilter} />
-			<PersonForm
-				newName={newName}
-				newNumber={newNumber}
-				handleNameChange={handleNameChange}
-				handleNumberChange={handleNumberChange}
-				addPerson={addPerson}
-			/>
-			<Persons
-				persons={persons}
-				filter={filter}
-				handleDeletePerson={handleDeletePerson}
-			/>
-		</>
-	);
+  return (
+    <>
+      <h2>Phonebook</h2>
+      <Notification notification={notification} />
+      <Filter filterStr={filterStr} handleChangeFilter={handleChangeFilter} />
+      <h3>add a new</h3>
+      <PersonForm
+        newPerson={newPerson}
+        handleSubmit={handleSubmit}
+        handleFormChange={handleFormChange}
+      />
+      <h3>Numbers</h3>
+      <Persons
+        filterStr={filterStr}
+        allPersons={allPersons}
+        handleRemove={handleRemove}
+      />
+    </>
+  );
 };
 
 export default App;

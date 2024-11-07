@@ -1,15 +1,22 @@
-/* eslint-disable react/prop-types */
+const Persons = ({ filterStr, allPersons, handleDeletePerson }) => {
+  const filteredPersons = () => {
+    return allPersons.filter((person) =>
+      person.name.toLowerCase().includes(filterStr.toLowerCase().trim())
+    );
+  };
 
-const Persons = ({ persons, filter, handleDeletePerson }) => {
-  const personsToShow = filter
-    ? persons.filter(person => person.name.toLowerCase().includes(filter))
-    : persons;
+  const persons =
+    filterStr.trim().length === 0 ? allPersons : filteredPersons();
 
   return (
     <div>
-      <h3>Numbers</h3>
-      {personsToShow.map(person => (
-        <div key={person.id}>{person.name} {person.number} <button onClick={handleDeletePerson}>delete</button></div>
+      {persons.map((person) => (
+        <p key={person.id}>
+          {person.name} {person.number}
+          <button onClick={() => handleDeletePerson(person.id, person.name)}>
+            delete
+          </button>
+        </p>
       ))}
     </div>
   );
