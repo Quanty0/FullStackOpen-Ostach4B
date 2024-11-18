@@ -7,14 +7,21 @@ import personService from "./services/persons";
 
 const App = () => {
   const [allPersons, setAllPersons] = useState([]);
-  const [filterStr, setFilterStr] = useState("");
+  const [filterStr, setFilterStr] = useState('');
   const [newPerson, setNewPerson] = useState({ name: "", number: "" });
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    personService.getAll().then((persons) => {
-      setAllPersons(persons);
-    });
+    personService.getAll()
+      .then((persons) => {
+        setAllPersons(persons);
+      })
+      .catch(error => {
+        setNotification({
+          type: "error",
+          text: `Failed to load data: ${error.message}`,
+        });
+      });
   }, []);
 
   useEffect(() => {
@@ -34,6 +41,7 @@ const App = () => {
     const result = allPersons.find(
       (person) => person.name === newPerson.name.trim()
     );
+
     if (!result) {
       personService
         .create(newPerson)
@@ -78,7 +86,7 @@ const App = () => {
               );
               setNotification({
                 type: "error",
-                text: `Information of ${newPerson.name} has already removed from server`,
+                text: `Information of ${newPerson.name} has already been removed from the server`,
               });
             } else {
               setNotification({
@@ -98,8 +106,8 @@ const App = () => {
     }));
   };
 
-  const handleChangeFilter = (event) => {
-    setFilterStr(event.target.value);
+  const handleChangeFilter = e => {
+    setFilterStr(e.target.value);
   };
 
   const handleRemove = (id, name) => {
@@ -121,7 +129,6 @@ const App = () => {
       <h2>Phonebook</h2>
       <Notification notification={notification} />
       <Filter filterStr={filterStr} handleChangeFilter={handleChangeFilter} />
-      <h3>add a new</h3>
       <PersonForm
         newPerson={newPerson}
         handleSubmit={handleSubmit}

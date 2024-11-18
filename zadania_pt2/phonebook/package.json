@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "react-scripts start",
+    "server": "json-server --watch db.json --port 5000",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

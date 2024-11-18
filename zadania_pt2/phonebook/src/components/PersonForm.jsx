@@ -1,8 +1,8 @@
 /* eslint-disable react/prop-types */
 
-const PersonForm = ({ newName, newNumber, handleNameChange, handleNumberChange, addPerson }) => {
+const PersonForm = ({ newName, newNumber, handleNameChange, handleNumberChange, handleSubmit }) => {
   return (
-    <form onSubmit={addPerson}>
+    <form onSubmit={handleSubmit}>
       <h3>add a new</h3>
       <div>
         name: <input onChange={handleNameChange} value={newName} />
