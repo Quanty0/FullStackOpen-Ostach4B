@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+
 import Filter from "./components/Filter";
 import Persons from "./components/Persons";
 import PersonForm from "./components/PersonForm";
 import Notification from "./components/Notification";
 import personService from "./services/persons";
+
+import './index.css';
 
 const App = () => {
   const [allPersons, setAllPersons] = useState([]);
@@ -13,7 +16,7 @@ const App = () => {
 
   useEffect(() => {
     personService.getAll()
-      .then((persons) => {
+      .then(persons => {
         setAllPersons(persons);
       })
       .catch(error => {
@@ -38,97 +41,118 @@ const App = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const result = allPersons.find(
-      (person) => person.name === newPerson.name.trim()
+  
+    const existingPerson = allPersons.find(
+      (person) => person.name.trim().toLowerCase() === newPerson.name.trim().toLowerCase()
     );
-
-    if (!result) {
+  
+    if (!existingPerson) {
+      // Create a new person
       personService
         .create(newPerson)
         .then((person) => {
           setAllPersons((prevPersons) => prevPersons.concat(person));
-          setNewPerson({ name: "", number: "" });
+          setNewPerson({ name: "", number: "" }); // Reset form fields
           setNotification({
             type: "success",
-            text: `${person.name} was successfully added`,
+            text: `${person.name} was successfully added.`,
           });
         })
         .catch((error) => {
           setNotification({
             type: "error",
-            text: error.response?.data?.error || "unknown error",
+            text: error.response?.data?.error || "An unknown error occurred.",
           });
         });
     } else {
+      // Update an existing person
       if (
         window.confirm(
-          `${newPerson.name} is already added to phonebook, replace the old number with a new one?`
+          `${newPerson.name} is already added to the phonebook. Replace the old number with a new one?`
         )
       ) {
+        const updatedPerson = { ...existingPerson, number: newPerson.number };
         personService
-          .update(result.id, newPerson)
-          .then((updatedPerson) => {
+          .update(existingPerson.id, updatedPerson)
+          .then((returnedPerson) => {
             setAllPersons((prevPersons) =>
               prevPersons.map((person) =>
-                person.id !== updatedPerson.id ? person : updatedPerson
+                person.id !== returnedPerson.id ? person : returnedPerson
               )
             );
-            setNewPerson({ name: "", number: "" });
+            setNewPerson({ name: "", number: "" }); // Reset form fields
             setNotification({
               type: "success",
-              text: `${newPerson.name} was successfully updated`,
+              text: `${returnedPerson.name}'s number was successfully updated.`,
             });
           })
           .catch((error) => {
             if (error.response?.status === 404) {
+              // Handle deleted resource
               setAllPersons((prevPersons) =>
-                prevPersons.filter((person) => person.id !== result.id)
+                prevPersons.filter((person) => person.id !== existingPerson.id)
               );
               setNotification({
                 type: "error",
-                text: `Information of ${newPerson.name} has already been removed from the server`,
+                text: `Information for ${newPerson.name} has already been removed from the server.`,
               });
             } else {
               setNotification({
                 type: "error",
-                text: error.response?.data?.error || "unknown error",
+                text: error.response?.data?.error || "An unknown error occurred.",
               });
             }
           });
       }
     }
   };
-
+  
   const handleFormChange = ({ target: { name, value } }) => {
-    setNewPerson((newPerson) => ({
-      ...newPerson,
+    setNewPerson((prevState) => ({
+      ...prevState,
       [name]: value,
     }));
   };
 
-  const handleChangeFilter = e => {
-    setFilterStr(e.target.value);
-  };
-
   const handleRemove = (id, name) => {
     if (window.confirm(`Delete ${name}?`)) {
-      personService.remove(id).then(() => {
-        setAllPersons((prevPersons) =>
-          prevPersons.filter((person) => person.id !== id)
-        );
-        setNotification({
-          type: "success",
-          text: `${name} was successfully deleted`,
+      personService
+        .remove(id)
+        .then(() => {
+          setAllPersons((prevPersons) =>
+            prevPersons.filter((person) => person.id !== id)
+          );
+          setNotification({
+            type: "success",
+            text: `${name} was successfully deleted.`,
+          });
+        })
+        .catch((error) => {
+          // Handle cases where the person might already be deleted
+          if (error.response?.status === 404) {
+            setAllPersons((prevPersons) =>
+              prevPersons.filter((person) => person.id !== id)
+            );
+            setNotification({
+              type: "error",
+              text: `The information for ${name} has already been removed from the server.`,
+            });
+          } else {
+            setNotification({
+              type: "error",
+              text: `Failed to delete ${name}: ${error.message}`,
+            });
+          }
         });
-      });
     }
   };
+  
 
   return (
     <>
       <h2>Phonebook</h2>
       <Notification notification={notification} />
-      <Filter filterStr={filterStr} handleChangeFilter={handleChangeFilter} />
+      <Filter filterStr={filterStr} setFilterStr={setFilterStr} />
       <PersonForm
         newPerson={newPerson}
         handleSubmit={handleSubmit}
@@ -141,7 +165,7 @@ const App = () => {
         handleRemove={handleRemove}
       />
     </>
-  );
+  );  
 };
 
 export default App;

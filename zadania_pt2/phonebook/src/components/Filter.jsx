@@ -1,13 +1,11 @@
-/* eslint-disable react/prop-types */
-
-const Filter = ({ filter, setFilter }) => {
+const Filter = ({ filterStr, setFilterStr }) => {
   const handleFilterChange = (e) => {
-    setFilter(e.target.value);
+    setFilterStr(e.target.value);
   };
 
   return (
     <div>
-      filter shown with <input onChange={handleFilterChange} value={filter} />
+      filter shown with <input onChange={handleFilterChange} value={filterStr} />
     </div>
   );
 };
