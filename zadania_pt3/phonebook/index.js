@@ -1,11 +1,12 @@
+require('dotenv').config()
 const express = require('express')
+const morgan = require('morgan')
+const cors = require('cors')
 const Person = require('./models/person')
 const app = express()
-require('dotenv').config()
 
 app.use(express.json())
-{/*
-let persons = []
+let persons = [
 	{
 		"id": "1",
 		"name": "Arto Hellas",
@@ -27,17 +28,16 @@ let persons = []
 		"number": "39-23-6423122"
 	}
 ]
-*/}
-// app.use(morgan((tokens, req, res) => {
-// 	return [
-// 		tokens.method(req, res),
-// 		tokens.url(req, res),
-// 		tokens.status(req, res),
-// 		tokens.res(req, res, 'content-length'), '-',
-// 		tokens['response-time'](req, res), 'ms',
-// 		JSON.stringify(req.body)
-// 	].join(' ')
-// }))
+
+app.use(cors())
+app.use(express.static('frontend'))
+app.use(express.json())
+app.use(
+  morgan(':method :url :status :res[content-length] - :response-time ms :post')
+)
+morgan.token('post', (req) => {
+  return req.method === 'POST' ? JSON.stringify(req.body) : ' '
+})
 
 app.get('/info', (request, response) => {
 	const currentDate = new Date().toLocaleString();
