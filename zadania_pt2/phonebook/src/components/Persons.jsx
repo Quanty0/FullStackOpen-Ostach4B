@@ -10,7 +10,7 @@ const Persons = ({ filterStr, allPersons, handleDeletePerson }) => {
 
   return (
     <div>
-      {persons.map((person) => (
+      {persons.map(person => (
         <p key={person.id}>
           {person.name} {person.number}
           <button onClick={() => handleDeletePerson(person.id, person.name)}>

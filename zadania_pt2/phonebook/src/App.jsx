@@ -12,8 +12,9 @@ const App = () => {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    personService.getAll().then((persons) => {
-      setAllPersons(persons);
+    personService.getAll()
+      .then((allPersons) => {
+      setAllPersons(allPersons);
     });
   }, []);
 
